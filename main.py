@@ -2,9 +2,14 @@ from flask import Flask, render_template, request
 from gpiozero import LED
 import RPi.GPIO as GPIO
 import time
+import Adafruit_DHT
 
 # GPIO Setup
 GPIO.setmode(GPIO.BCM)
+
+# DHT11 Sensor Setup
+DHT_SENSOR = Adafruit_DHT.DHT11
+DHT_PIN = 18
 
 # LED Pins for Rooms
 room_leds = [LED(17), LED(27), LED(22)]
@@ -35,6 +40,12 @@ for pin in segments + mux_pins:
 # Flask App Setup
 app = Flask(__name__)
 room_counts = [0, 0, 0]
+
+def get_dht_data():
+    humidity, temperature = Adafruit_DHT.read_retry(DHT_SENSOR, DHT_PIN)
+    if humidity is None or temperature is None:
+        return "N/A", "N/A"
+    return f"{temperature:.1f}°C", f"{humidity:.1f}%"
 
 # Display a number on the 7-segment display
 def display_number(room_id, number):
@@ -67,7 +78,8 @@ def index():
 def enter_room(room_id):
     room_leds[room_id].on()
     display_number(room_id, room_counts[room_id])
-    return render_template('room.html', room_id=room_id, count=room_counts[room_id])
+    temperature, humidity = get_dht_data()
+    return render_template('room.html', room_id=room_id, count=room_counts[room_id], temperature=temperature, humidity=humidity)
 
 # Update Room Inventory
 @app.route('/update', methods=['POST'])
@@ -82,7 +94,8 @@ def update():
     # Update display
     display_number(room_id, room_counts[room_id])
     print(f"Room {room_id + 1}: {room_counts[room_id]}")
-    return render_template('room.html', room_id=room_id, count=room_counts[room_id])
+    temperature, humidity = get_dht_data()
+    return render_template('room.html', room_id=room_id, count=room_counts[room_id], temperature=temperature, humidity=humidity)
 
 # Leave Room Route
 @app.route('/leave/<int:room_id>')

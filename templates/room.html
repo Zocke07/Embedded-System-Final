@@ -10,6 +10,8 @@
     <div class="container">
         <h1 class="mt-5">Room {{ room_id + 1 }}</h1>
         <p>Current Count: {{ count }}</p>
+        <p>Temperature: {{ temperature }}</p>
+        <p>Humidity: {{ humidity }}</p>
         <form action="/update" method="post">
             <input type="hidden" name="room_id" value="{{ room_id }}">
             <button class="btn btn-success" name="action" value="add">Add</button>

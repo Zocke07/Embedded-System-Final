@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <title>Room Inventory</title>
+</head>
+<body>
+    <div class="container">
+        <h1 class="mt-5">Room Inventory</h1>
+        <div class="row">
+            {% for room in rooms %}
+            <div class="col-md-4">
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5 class="card-title">Room {{ loop.index }}</h5>
+                        <p class="card-text">Current Count: {{ room }}</p>
+                        <form action="/enter/{{ loop.index0 }}" method="get">
+                            <button class="btn btn-primary">Enter Room</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>

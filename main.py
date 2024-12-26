@@ -7,11 +7,11 @@ from threading import Thread
 GPIO.setmode(GPIO.BOARD)
 
 # LED Pins for Rooms (Adjusted to BOARD mode)
-room_leds = [22, 24, 26]  # Physical pins for LEDs
+room_leds = [38, 40, 26]  # Physical pins for LEDs
 
 # 7-Segment Display Setup
-segments = [3, 5, 7, 11, 13, 15, 19]  # Pins for 7-segment segments
-mux_pins = [21, 23]  # Pins for tens and ones multiplexer
+segments = [3, 5, 7, 11, 13, 15, 18]  # Pins for 7-segment segments
+mux_pins = [35, 36]  # Pins for tens and ones multiplexer
 
 # Initialize GPIO Pins
 for pin in segments + mux_pins + room_leds:

@@ -24,6 +24,9 @@
             background-color: #0056b3;
             border-color: #0056b3;
         }
+        .text-danger {
+            color: red; /* Red color for counts less than or equal to 5 */
+        }
     </style>
 </head>
 <body>
@@ -35,7 +38,7 @@
                 <div class="card mt-3 shadow-sm">
                     <div class="card-body text-center">
                         <h5 class="card-title">Room {{ loop.index }}</h5>
-                        <p class="card-text">Current Count: <strong>{{ room }}</strong></p>
+                        <p class="card-text">Current Count: <strong class="{% if room <= 5 %}text-danger{% endif %}">{{ room }}</strong></p>
                         <form action="/enter/{{ loop.index0 }}" method="get">
                             <button class="btn btn-primary"><i class="fas fa-door-open"></i> Enter Room</button>
                         </form>

@@ -67,6 +67,7 @@ def monitor_buttons():
                 room_counts[current_room] = min(room_counts[current_room] + 1, 99)
                 print(f"Room {current_room + 1} Add Button Pressed. New Count: {room_counts[current_room]}")
                 update_warning_led(current_room)
+                time.sleep(0.3)
 
         # Detect Remove button press (transition from HIGH to LOW)
         if last_remove_state == GPIO.HIGH and current_remove_state == GPIO.LOW:
@@ -74,6 +75,7 @@ def monitor_buttons():
                 room_counts[current_room] -= 1
                 print(f"Room {current_room + 1} Remove Button Pressed. New Count: {room_counts[current_room]}")
                 update_warning_led(current_room)
+                time.sleep(0.3)
 
         # Update the last state to the current state for the next loop iteration
         last_add_state = current_add_state

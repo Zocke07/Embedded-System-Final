@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, redirect, request, url_for
 import RPi.GPIO as GPIO
 import time
 from threading import Thread
+from mfrc522 import SimpleMFRC522
 #import Adafruit_DHT
 
 # GPIO Setup
@@ -12,6 +13,7 @@ room_leds = [38, 40, 26]  # Physical pins for room LEDs
 warning_leds = [32, 33, 37]  # Additional LEDs for warning when item count < 5
 
 # 7-Segment Display Setup
+
 segments = [3, 5, 7, 11, 13, 15, 18]  # Pins for 7-segment segments
 mux_pins = [35, 36]  # Pins for tens and ones multiplexer
 
@@ -24,6 +26,8 @@ for pin in segments + mux_pins + room_leds + warning_leds:
 app = Flask(__name__)
 room_counts = [10, 10, 10]  # Initial item counts for rooms
 current_room = -1  # No room is active initially
+
+reader = SimpleMFRC522()
 
 # 7-Segment Encoding for Digits 0-9 (Common Anode)
 seven_seg_encoding = [
@@ -127,21 +131,46 @@ def update_warning_led(room_id):
 display_thread = Thread(target=refresh_display, daemon=True)
 display_thread.start()
 
-# Home Route
+valid_uid = ['85615652294', '0987654321']
+
 @app.route('/')
+def login():
+    return render_template('login.html')
+
+@app.route('/login', methods=['POST'])
+def rfid_login():
+    try:
+        # Start reading RFID
+        id, text = reader.read()
+        print(f"Scanned RFID ID: {id}")  # For debugging
+
+        # You can check if the scanned RFID matches a known ID here
+        if str(id) == "85615652294":  # Replace with a valid UID to check against
+            return redirect(url_for('index'))
+        else:
+            return render_template('login.html', error="Invalid RFID")
+
+    except Exception as e:
+        print(f"Error reading RFID: {e}")
+        return render_template('login.html', error="Error reading RFID")
+
+@app.route('/index')
 def index():
     global current_room
-    current_room = -1  # No room is active
+    current_room = -1
+    # No room is active
     # Turn off all LEDs
     for led in room_leds:
         GPIO.output(led, GPIO.LOW)
-    return render_template('index.html', rooms=room_counts)
+    return render_template('index.html', rooms=room_counts)  # Main page after successful login
+
 
 # Enter Room Route
 @app.route('/enter/<int:room_id>')
 def enter_room(room_id):
     global current_room
-    current_room = room_id  # Set the active room
+    current_room = room_id  
+    # Set the active room
 
     # Turn off all LEDs first
     for led in room_leds:

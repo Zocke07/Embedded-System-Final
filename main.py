@@ -7,7 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate('inventory-9756d-firebase-adminsdk-h2cgm-9a0177ad34.json')
+cred = credentials.Certificate('inventory-9756d-firebase-adminsdk-h2cgm-f24bc2ea19.json')
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://inventory-9756d-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })

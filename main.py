@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, request, url_for
+from flask import Flask, render_template, redirect, request, url_for, session
 import RPi.GPIO as GPIO
 import time
 from threading import Thread
@@ -139,6 +139,7 @@ def login():
 
 @app.route('/login', methods=['POST'])
 def rfid_login():
+    global text
     try:
         # Start reading RFID
         id, text = reader.read()
@@ -146,7 +147,9 @@ def rfid_login():
 
         # You can check if the scanned RFID matches a known ID here
         if str(id) == "85615652294":  # Replace with a valid UID to check against
-            return redirect(url_for('index'))
+            #session['user_name'] = text.strip()
+            #return redirect(url_for('index'))
+            return render_template('index.html', user_name=text, rooms=room_counts)
         else:
             return render_template('login.html', error="Invalid RFID")
 
@@ -156,13 +159,13 @@ def rfid_login():
 
 @app.route('/index')
 def index():
-    global current_room
+    global current_room, text
     current_room = -1
     # No room is active
     # Turn off all LEDs
     for led in room_leds:
         GPIO.output(led, GPIO.LOW)
-    return render_template('index.html', rooms=room_counts)  # Main page after successful login
+    return render_template('index.html', rooms=room_counts, user_name=text)  # Main page after successful login
 
 
 # Enter Room Route
@@ -190,7 +193,6 @@ def enter_room(room_id):
 def update():
     room_id = int(request.form['room_id'])
     action = request.form['action']
-    
     if action == "add":
         room_counts[room_id] = min(room_counts[room_id] + 1, 99)
     elif action == "remove" and room_counts[room_id] > 0:
@@ -210,6 +212,11 @@ def update():
         GPIO.output(warning_leds[room_id], GPIO.LOW)  # Turn off the warning LED
 
     return render_template('room.html', room_id=room_id, count=room_counts[room_id])
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    #return render_template('login.html')
+    return redirect(url_for('login'))
 
 # Leave Room Route
 @app.route('/leave/<int:room_id>')

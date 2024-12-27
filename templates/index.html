@@ -9,6 +9,10 @@
     <style>
         body {
             background-color: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 100vh;
         }
         .card {
             transition: transform 0.2s;
@@ -27,10 +31,28 @@
         .text-danger {
             color: red; /* Red color for counts less than or equal to 5 */
         }
+        .logout-container {
+            text-align: right;
+            margin-top: 10px;
+        }
+        .user-info {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .user-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff;
+        }
     </style>
 </head>
 <body>
     <div class="container">
+        <div class="logout-container">
+            <form action="/logout" method="post">
+                <button class="btn btn-danger">Logout</button>
+            </form>
+        </div>
         <h1 class="mt-5 text-center">Room Inventory</h1>
         <div class="row">
             {% for room in rooms %}
@@ -46,6 +68,9 @@
                 </div>
             </div>
             {% endfor %}
+        </div>
+        <div class="user-info">
+            <p>Welcome, <span class="user-name">{{ user_name }}</span>!</p>
         </div>
     </div>
 </body>

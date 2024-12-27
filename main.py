@@ -2,6 +2,7 @@ from flask import Flask, render_template, request
 import RPi.GPIO as GPIO
 import time
 from threading import Thread
+#import Adafruit_DHT
 
 # GPIO Setup
 GPIO.setmode(GPIO.BOARD)

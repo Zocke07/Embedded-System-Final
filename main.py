@@ -7,20 +7,21 @@ from threading import Thread
 GPIO.setmode(GPIO.BOARD)
 
 # LED Pins for Rooms (Adjusted to BOARD mode)
-room_leds = [38, 40, 26]  # Physical pins for LEDs
+room_leds = [38, 40, 26]  # Physical pins for room LEDs
+warning_leds = [32, 33, 37]  # Additional LEDs for warning when item count < 5
 
 # 7-Segment Display Setup
 segments = [3, 5, 7, 11, 13, 15, 18]  # Pins for 7-segment segments
 mux_pins = [35, 36]  # Pins for tens and ones multiplexer
 
 # Initialize GPIO Pins
-for pin in segments + mux_pins + room_leds:
+for pin in segments + mux_pins + room_leds + warning_leds:
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
 
 # Flask App Setup
 app = Flask(__name__)
-room_counts = [0, 0, 0]  # Initial item counts for rooms
+room_counts = [10, 10, 10]  # Initial item counts for rooms
 current_room = -1  # No room is active initially
 
 # 7-Segment Encoding for Digits 0-9 (Common Anode)
@@ -36,6 +37,54 @@ seven_seg_encoding = [
     [0, 0, 0, 0, 0, 0, 0],  # 8
     [0, 0, 0, 0, 1, 0, 0]   # 9
 ]
+
+# GPIO Pins for Buttons
+button_add = 29  # Physical pin for Add button
+button_remove = 31  # Physical pin for Remove button
+
+# Setup Buttons
+GPIO.setup(button_add, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Use pull-up resistor
+GPIO.setup(button_remove, GPIO.IN, pull_up_down=GPIO.PUD_UP)  # Use pull-up resistor
+
+# Button Debounce Time (in seconds)
+debounce_time = 0.5
+
+# Background Thread to Monitor Buttons
+def monitor_buttons():
+    global current_room
+
+    last_add_state = GPIO.input(button_add)
+    last_remove_state = GPIO.input(button_remove)
+
+    while True:
+        # Read the current state of the buttons
+        current_add_state = GPIO.input(button_add)
+        current_remove_state = GPIO.input(button_remove)
+
+        # Detect Add button press (transition from HIGH to LOW)
+        if last_add_state == GPIO.HIGH and current_add_state == GPIO.LOW:
+            if current_room != -1:
+                room_counts[current_room] = min(room_counts[current_room] + 1, 99)
+                print(f"Room {current_room + 1} Add Button Pressed. New Count: {room_counts[current_room]}")
+                update_warning_led(current_room)
+
+        # Detect Remove button press (transition from HIGH to LOW)
+        if last_remove_state == GPIO.HIGH and current_remove_state == GPIO.LOW:
+            if current_room != -1 and room_counts[current_room] > 0:
+                room_counts[current_room] -= 1
+                print(f"Room {current_room + 1} Remove Button Pressed. New Count: {room_counts[current_room]}")
+                update_warning_led(current_room)
+
+        # Update the last state to the current state for the next loop iteration
+        last_add_state = current_add_state
+        last_remove_state = current_remove_state
+
+        # Small delay to reduce CPU usage
+        time.sleep(0.01)
+
+# Start the Button Monitoring Thread
+button_thread = Thread(target=monitor_buttons, daemon=True)
+button_thread.start()
 
 # Background Thread to Continuously Refresh Display
 def refresh_display():
@@ -65,6 +114,12 @@ def refresh_display():
         time.sleep(0.005)
         GPIO.output(mux_pins[1], GPIO.LOW)   # Disable ones multiplexer
 
+def update_warning_led(room_id):
+    if room_counts[room_id] <= 5:
+        GPIO.output(warning_leds[room_id], GPIO.HIGH)  # Turn on warning LED
+    else:
+        GPIO.output(warning_leds[room_id], GPIO.LOW)  # Turn off warning LED
+
 # Start the Display Refresh Loop in a Separate Thread
 display_thread = Thread(target=refresh_display, daemon=True)
 display_thread.start()
@@ -92,6 +147,10 @@ def enter_room(room_id):
     # Turn on the selected room's LED
     GPIO.output(room_leds[room_id], GPIO.HIGH)
     
+    # Check if the item count is below 5 for the warning LED
+    if room_counts[room_id] <= 5:
+        GPIO.output(warning_leds[room_id], GPIO.HIGH)  # Turn on the warning LED
+    
     return render_template('room.html', room_id=room_id, count=room_counts[room_id])
 
 # Update Room Inventory
@@ -111,6 +170,13 @@ def update():
             room_counts[room_id] = new_quantity
 
     print(f"Room {room_id + 1}: {room_counts[room_id]}")
+    
+    # Check if the item count is below 5 for the warning LED
+    if room_counts[room_id] <= 5:
+        GPIO.output(warning_leds[room_id], GPIO.HIGH)  # Turn on the warning LED
+    else:
+        GPIO.output(warning_leds[room_id], GPIO.LOW)  # Turn off the warning LED
+
     return render_template('room.html', room_id=room_id, count=room_counts[room_id])
 
 # Leave Room Route

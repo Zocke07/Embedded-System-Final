@@ -7,7 +7,7 @@ import firebase_admin
 from firebase_admin import credentials, db
 
 # Initialize Firebase Admin SDK
-cred = credentials.Certificate('inventory-9756d-firebase-adminsdk-h2cgm-f24bc2ea19.json')
+cred = credentials.Certificate('inventory-9756d-firebase-adminsdk-h2cgm-ef480640da.json')
 firebase_admin.initialize_app(cred, {
     'databaseURL': 'https://inventory-9756d-default-rtdb.asia-southeast1.firebasedatabase.app/'
 })
@@ -15,14 +15,6 @@ firebase_admin.initialize_app(cred, {
 # Reference to the Firebase database nodes
 firebase_ref_total_items = db.reference('Total Items')
 firebase_ref_low_stock = db.reference('Low Stock')
-
-# Initialize Firebase data
-initial_data = {
-    "Room 1": 10,
-    "Room 2": 10,
-    "Room 3": 10
-}
-firebase_ref_total_items.set(initial_data)
 
 # Initialize Low Stock data
 initial_low_stock = {
@@ -42,17 +34,27 @@ warning_leds = [32, 33, 37]  # Additional LEDs for warning when item count < 5
 # 7-Segment Display Setup
 
 segments = [3, 5, 7, 11, 13, 15, 18]  # Pins for 7-segment segments
-mux_pins = [35, 36]  # Pins for tens and ones multiplexer
+mux_pins = [35, 36]  # Pins for tens and ones multiplexerupdate
 
 # Initialize GPIO Pins
 for pin in segments + mux_pins + room_leds + warning_leds:
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
 
+def get_data():
+	roomLst = []
+	room1 = db.reference('Total Items/Room 1').get()
+	room2 = db.reference('Total Items/Room 2').get()
+	room3 = db.reference('Total Items/Room 3').get()
+	roomLst.append(room1)
+	roomLst.append(room2)
+	roomLst.append(room3)
+	return roomLst
+
 # Flask App Setup
 app = Flask(__name__)
 current_room = -1  # No room is active initially
-room_counts = [10, 10, 10]  # Initial counts for Room 1, Room 2, Room 3
+room_counts = get_data()  # Initial counts for Room 1, Room 2, Room 3
 
 reader = SimpleMFRC522()
 
